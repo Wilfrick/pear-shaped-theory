@@ -1,0 +1,221 @@
+// https://editor.p5js.org/
+// https://p5js.org/reference/#/p5.Vector
+
+const SCALE = 20
+let puckPos, puckVel;
+
+let scores = [];
+
+
+function setup() {
+  createCanvas(15*SCALE, 25*SCALE);
+  background(255);
+  noLoop()
+  puckPos = createVector(4*SCALE, 4*SCALE)
+  puckVel = createVector(1, 1)
+  let l;
+  for (let x = 5; x < width; x+= 10){
+    l =  []
+    for (let y = 5; y < height; y += 10){
+      let pos = createVector(x, y)
+      l.push([pos, apparentGoalAngle(pos)/distanceToGoal(pos)])
+    }
+  scores.push(l)}
+}
+
+function drawGoal(){
+  line(6*SCALE, 0, 9*SCALE, 0)
+}
+
+function apparentGoalAngle(puckVec){
+  return createVector(puckVec.x, puckVec.y).sub(createVector(6*SCALE, 0)).angleBetween(createVector(puckVec.x, puckVec.y).sub(createVector(9*SCALE, 0)))
+}
+
+function distanceToGoal(puckVec) {
+  return createVector(puckVec.x, puckVec.y).sub(createVector(7.5*SCALE, 0)).mag()
+}
+
+
+function draw() {
+  background(255)
+  drawGoal()
+  for( l of scores){
+    for (posScore of l) {
+      strokeWeight(posScore[1]*100)
+      point(posScore[0])
+    }
+  }
+  
+  
+  
+  
+}
+
+-----------------------
+
+const SCALE = 20
+let puckPos, puckVel;
+const INCREMENT = 10;
+
+let scores = [];
+
+
+function setup() {
+  createCanvas(15*SCALE, 25*SCALE);
+  background(255);
+  noLoop()
+  puckPos = createVector(4*SCALE, 4*SCALE)
+  puckVel = createVector(1, 1)
+  let l;
+  for (let x = 5; x < width; x+= INCREMENT){
+    l =  []
+    for (let y = 5; y < height; y += INCREMENT){
+      let pos = createVector(x, y)
+      l.push([pos, apparentGoalAngle(pos)/distanceToGoal(pos)])
+    }
+  scores.push(l)
+  }
+}
+
+function calculateDerivatives(scores){
+  for (let x_index in scores) {
+    for (let y_index in scores[x_index]){
+      console.log(x_index, y_index, scores[x_index][y_index])
+      let dx, dy;
+      dx = x_index < scores.length - 1 ? (scores[x_index][y_index][1] - scores[x_index+1][y_index][1])/INCREMENT: 0
+      dy = y_index < scores[0].length - 1 ? (scores[x_index][y_index][1] - scores[x_index][y_index+1][1])/INCREMENT: 0
+      let derivative = createVector(dx, dy)
+      scores[x_index][y_index].push(derivative)
+    }
+  }
+}
+
+function drawGoal(){
+  line(6*SCALE, 0, 9*SCALE, 0)
+}
+
+function apparentGoalAngle(puckVec){
+  return createVector(puckVec.x, puckVec.y).sub(createVector(6*SCALE, 0)).angleBetween(createVector(puckVec.x, puckVec.y).sub(createVector(9*SCALE, 0)))
+}
+
+function distanceToGoal(puckVec) {
+  return createVector(puckVec.x, puckVec.y).sub(createVector(7.5*SCALE, 0)).mag()
+}
+
+
+function draw() {
+  background(255)
+  drawGoal()
+  calculateDerivatives(scores)
+  for(let l of scores){
+    for (let posScore of l) {
+      strokeWeight(posScore[1]*100)
+      point(posScore[0])
+    }
+  }
+  
+  
+  
+  
+}
+  
+ --------------------------------------------------------
+
+const SCALE = 20
+let puckPos, puckVel;
+const INCREMENT = 10;
+
+let scores = [];
+let attackingAmount = 0;
+
+
+function setup() {
+  createCanvas(15*SCALE, 25*SCALE);
+  background(255);
+}
+
+function populateScores(){
+  scores = []
+  for (let x = 5; x < width; x+= INCREMENT){
+    let l =  []
+    for (let y = 5; y < height; y += INCREMENT){
+      let pos = createVector(x, y)
+      l.push([pos, apparentGoalAngle(pos)/distanceToGoal(pos)])
+    }
+  scores.push(l)
+  }
+}
+
+function calculateDerivatives(scores){
+  scores.forEach((l, x_index) => {
+    l.forEach((_, y_index)=>{
+      let dx, dy;
+      if (x_index === 0) {
+        dx = (scores[x_index][y_index][1] - scores[x_index+1][y_index][1])/INCREMENT
+      } else if (x_index === scores.length - 1) {
+        dx = (scores[x_index-1][y_index][1] - scores[x_index][y_index][1])/INCREMENT
+      } else {
+        dx = (scores[x_index-1][y_index][1] - scores[x_index+1][y_index][1])/(INCREMENT*2)
+      }
+      if (y_index === 0) {
+        dy = (scores[x_index][y_index][1] - scores[x_index][y_index+1][1])/INCREMENT
+      } else if (y_index === l.length - 1) {
+        dy = (scores[x_index][y_index-1][1] - scores[x_index][y_index][1])/INCREMENT
+      } else {
+        dy = (scores[x_index][y_index-1][1] - scores[x_index][y_index+1][1])/(INCREMENT*2)
+      }
+      // dx = x_index < scores.length - 1 ? (scores[x_index][y_index][1] - scores[x_index+1][y_index][1])/INCREMENT: 1
+      // dy = y_index < scores[0].length - 1 ? (scores[x_index][y_index][1] - scores[x_index][y_index+1][1])/INCREMENT: 1
+      let derivative = createVector(dx, dy)
+      // derivative.div(derivative.mag()).mult(8)
+      scores[x_index][y_index].push(derivative)
+    })
+  })
+}
+
+function addFlippedInverse(scores, attackingValue){
+  attackingValue = attackingValue ?? 0.5 // should be between 0 and 1
+  scores.forEach((l, x_index)=>{
+    l.forEach((posScore, y_index)=>{
+      let newVec = p5.Vector.lerp(posScore[2], scores[scores.length - 1 - x_index][l.length - 1 - y_index][2], attackingValue)
+      posScore.push(newVec)
+    })
+  })
+}
+
+function drawGoal(){
+  line(6*SCALE, 0, 9*SCALE, 0)
+}
+
+function apparentGoalAngle(puckVec){
+  return createVector(puckVec.x, puckVec.y).sub(createVector(6*SCALE, 0)).angleBetween(createVector(puckVec.x, puckVec.y).sub(createVector(9*SCALE, 0)))
+}
+
+function distanceToGoal(puckVec) {
+  return createVector(puckVec.x, puckVec.y).sub(createVector(7.5*SCALE, 0)).mag()
+}
+
+
+function draw() {
+  background(255)
+  drawGoal()
+  populateScores()
+  calculateDerivatives(scores)
+  addFlippedInverse(scores, attackingAmount)
+  attackingAmount += 0.005
+  attackingAmount %= 1
+  for(let l of scores){
+    for (let posScore of l) {
+      strokeWeight(log(posScore[1]*100))
+      point(posScore[0])
+      strokeWeight(1)
+      let direction = createVector(posScore[3].x, posScore[3].y)
+      direction.setMag(8)
+      line(posScore[0].x, posScore[0].y, posScore[0].x + direction.x, posScore[0].y + direction.y)
+    }
+  }
+}
+  
+  // https://editor.p5js.org/alexwarr00/sketches/jgmcQRxVW
+  
+  
